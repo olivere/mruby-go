@@ -21,6 +21,25 @@ func TestParse(t *testing.T) {
 	}
 }
 
+func TestExceptionOnRun(t *testing.T) {
+	ctx := mruby.NewContext()
+
+	parser, err := ctx.Parse("raise 'kaboom'")
+	if err != nil {
+		t.Fatal(err)
+	}
+	res, err := parser.Run()
+	if err == nil {
+		t.Fatal("expected exception message as error, got nil")
+	}
+	if err.Error() != "kaboom" {
+		t.Errorf("expected exception message 'kaboom', got %v", err.Error())
+	}
+	if res != nil {
+		t.Fatal("expected result to be nil, got %v", res)
+	}
+}
+
 func BenchmarkParse(b *testing.B) {
 	ctx := mruby.NewContext()
 

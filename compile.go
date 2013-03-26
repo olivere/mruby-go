@@ -39,6 +39,22 @@ int
 my_type(mrb_value v) {
 	return mrb_type(v);
 }
+
+int
+has_exception(mrb_state *mrb) {
+	return mrb->exc != 0;
+}
+
+void
+reset_exception(mrb_state *mrb) {
+	mrb->exc = 0;
+}
+
+char *
+get_exception_message(mrb_state *mrb) {
+	mrb_value val = mrb_obj_value(mrb->exc);
+	return mrb_string_value_ptr(mrb, val);
+}
 */
 import "C"
 
@@ -86,6 +102,12 @@ func (p *Parser) Run() (interface{}, error) {
 	defer C.mrb_gc_arena_restore(p.ctx.mrb, ai)
 
 	result := C.my_run(p.ctx.mrb, p.n)
+
+	if C.has_exception(p.ctx.mrb) != 0 {
+		msg := C.GoString(C.get_exception_message(p.ctx.mrb))
+		C.reset_exception(p.ctx.mrb)
+		return nil, errors.New(fmt.Sprintf("%s", msg))
+	}
 
 	return ruby2go(p.ctx, result), nil
 }
