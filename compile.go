@@ -9,6 +9,7 @@ package mruby
 #include <string.h>
 
 #include <mruby.h>
+#include <mruby/array.h>
 #include <mruby/proc.h>
 #include <mruby/data.h>
 #include <mruby/compile.h>
@@ -60,29 +61,6 @@ import (
 	"unsafe"
 )
 
-// LoadString loads a snippet of Ruby code and returns its output.
-// An error is returned if the interpreter failes or the Ruby code
-// raises an exception.
-func (ctx *Context) LoadString(code string) (interface{}, error) {
-	ccode := C.CString(code)
-	defer C.free(unsafe.Pointer(ccode))
-
-	ai := C.mrb_gc_arena_save(ctx.mrb)
-	defer C.mrb_gc_arena_restore(ctx.mrb, ai)
-
-	result := C.mrb_load_string_cxt(ctx.mrb, ccode, ctx.ctx)
-
-	if C.has_exception(ctx.mrb) != 0 {
-		msg := C.GoString(C.get_exception_message(ctx.mrb))
-		C.reset_exception(ctx.mrb)
-		return nil, errors.New(msg)
-	}
-
-	//log.Printf("mruby result type: %s\n", rubyTypeOf(ctx, result))
-
-	return ruby2go(ctx, result), nil
-}
-
 // Parser is a parser for Ruby code. It can be used to parse
 // Ruby code once and run it multiple times.
 type Parser struct {
@@ -120,12 +98,23 @@ func (ctx *Context) Parse(code string) (*Parser, error) {
 
 // Run runs a previously compiled Ruby code and returns its output.
 // An error is returned if the Ruby code raises an exception.
-func (p *Parser) Run() (interface{}, error) {
+func (p *Parser) Run(args ...interface{}) (interface{}, error) {
 	ai := C.mrb_gc_arena_save(p.ctx.mrb)
 	defer C.mrb_gc_arena_restore(p.ctx.mrb, ai)
 
+	// Create ARGV global variable and push the args into it
+	argv := C.CString("ARGV")
+	defer C.free(unsafe.Pointer(argv))
+	argvAry := C.mrb_ary_new(p.ctx.mrb)
+	for i := 0; i < len(args); i++ {
+		C.mrb_ary_push(p.ctx.mrb, argvAry, go2ruby(p.ctx, args[i]))
+	}
+	C.mrb_define_global_const(p.ctx.mrb, argv, argvAry)
+
+	// Run the code
 	result := C.my_run(p.ctx.mrb, p.n)
 
+	// Check for exception
 	if C.has_exception(p.ctx.mrb) != 0 {
 		msg := C.GoString(C.get_exception_message(p.ctx.mrb))
 		C.reset_exception(p.ctx.mrb)
@@ -133,4 +122,36 @@ func (p *Parser) Run() (interface{}, error) {
 	}
 
 	return ruby2go(p.ctx, result), nil
+}
+
+// LoadString loads a snippet of Ruby code and returns its output.
+// An error is returned if the interpreter failes or the Ruby code
+// raises an exception.
+func (ctx *Context) LoadString(code string, args ...interface{}) (interface{}, error) {
+	ccode := C.CString(code)
+	defer C.free(unsafe.Pointer(ccode))
+
+	ai := C.mrb_gc_arena_save(ctx.mrb)
+	defer C.mrb_gc_arena_restore(ctx.mrb, ai)
+
+	// Create ARGV global variable and push the args into it
+	argv := C.CString("ARGV")
+	defer C.free(unsafe.Pointer(argv))
+	argvAry := C.mrb_ary_new(ctx.mrb)
+	for i := 0; i < len(args); i++ {
+		C.mrb_ary_push(ctx.mrb, argvAry, go2ruby(ctx, args[i]))
+	}
+	C.mrb_define_global_const(ctx.mrb, argv, argvAry)
+
+	result := C.mrb_load_string_cxt(ctx.mrb, ccode, ctx.ctx)
+
+	if C.has_exception(ctx.mrb) != 0 {
+		msg := C.GoString(C.get_exception_message(ctx.mrb))
+		C.reset_exception(ctx.mrb)
+		return nil, errors.New(msg)
+	}
+
+	//log.Printf("mruby result type: %s\n", rubyTypeOf(ctx, result))
+
+	return ruby2go(ctx, result), nil
 }

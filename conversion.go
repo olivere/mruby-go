@@ -102,6 +102,8 @@ import "C"
 import (
 	"fmt"
 	_ "log"
+	"reflect"
+	"unsafe"
 )
 
 // ruby2go converts a value in mruby to an interface{} in Go.
@@ -117,7 +119,7 @@ func ruby2go(ctx *Context, v C.mrb_value) interface{} {
 	case C.MRB_TT_TRUE:
 		return true
 	case C.MRB_TT_FIXNUM:
-		return int64(C.get_fixnum(v))
+		return int(C.get_fixnum(v))
 	case C.MRB_TT_SYMBOL:
 		// Return symbol as string
 		return C.GoString(C.mrb_sym2name(ctx.mrb, C.get_symbol(v)))
@@ -159,6 +161,45 @@ func ruby2go(ctx *Context, v C.mrb_value) interface{} {
 		return nil
 	}
 	return nil
+}
+
+func go2ruby(ctx *Context, v interface{}) C.mrb_value {
+	kv := reflect.ValueOf(v)
+	switch kv.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return C.mrb_fixnum_value(C.mrb_int(kv.Int()))
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		return C.mrb_fixnum_value(C.mrb_int(kv.Int()))
+	case reflect.Float32, reflect.Float64:
+		return C.mrb_float_value(C.mrb_float(kv.Float()))
+	case reflect.String:
+		cs := C.CString(kv.String())
+		defer C.free(unsafe.Pointer(cs))
+		return C.mrb_str_new_cstr(ctx.mrb, cs)
+	case reflect.Bool:
+		if kv.Bool() {
+			return C.mrb_true_value()
+		}
+		return C.mrb_false_value()
+	case reflect.Array, reflect.Slice:
+		ary := C.mrb_ary_new(ctx.mrb)
+		for i := 0; i < kv.Len(); i++ {
+			C.mrb_ary_push(ctx.mrb, ary, go2ruby(ctx, kv.Index(i).Interface()))
+		}
+		return ary
+	case reflect.Map:
+		hsh := C.mrb_hash_new(ctx.mrb)
+		for _, key := range kv.MapKeys() {
+			value := kv.MapIndex(key)
+			C.mrb_hash_set(ctx.mrb, hsh,
+				go2ruby(ctx, key.String()),
+				go2ruby(ctx, value.Interface()))
+		}
+		return hsh
+	case reflect.Interface:
+		return go2ruby(ctx, kv.Elem().Interface())
+	}
+	return C.mrb_nil_value()
 }
 
 // rubyType encapsulates information about a mrb_value

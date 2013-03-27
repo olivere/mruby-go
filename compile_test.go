@@ -36,21 +36,21 @@ func TestLoadStringWithDifferentResults(t *testing.T) {
 		{"nil", "nil", nil, false},
 		{"string", "'Oliver'", "Oliver", false},
 		{"string2", "\"Oliver\"", "Oliver", false},
-		{"zero int", "0", int64(0), false},
+		{"zero int", "0", 0, false},
 		{"zero float", "0.0", float64(0.0), false},
-		{"int", "42", int64(42), false},
+		{"int", "42", 42, false},
 		{"float", "42.3", float64(42.3), false},
 		{"symbol", ":oliver", "oliver", false},
 		{"array", "['Oliver', 2, 42.3, true, nil]", []interface{}{
-			"Oliver", int64(2), float64(42.3), true, nil,
+			"Oliver", 2, float64(42.3), true, nil,
 		}, false},
 		{"hash", "{:name => 'Oliver', :age => 21}", map[string]interface{}{
 			"name": "Oliver",
-			"age":  int64(21),
+			"age":  21,
 		}, false},
 		{"complex hash", "{:name => 'Oliver', 'age' => 21, address: {city: 'Munich'}}", map[string]interface{}{
 			"name": "Oliver",
-			"age":  int64(21),
+			"age":  21,
 			"address": map[string]interface{}{
 				"city": "Munich",
 			},
@@ -82,6 +82,49 @@ func TestLoadStringWithDifferentResults(t *testing.T) {
 				t.Errorf("test %s:\n  expected %v, got %v", test.Name, test.Expected, res)
 			}
 		}
+	}
+}
+
+func TestLoadStringWithArgs(t *testing.T) {
+	ctx := mruby.NewContext()
+
+	var res interface{}
+	var err error
+
+	res, err = ctx.LoadString("ARGV[0]", "Oliver", "Sandra")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res != "Oliver" {
+		t.Errorf("expected %v, got %v", "Oliver", res)
+	}
+
+	res, err = ctx.LoadString("ARGV[1]", "Oliver", "Sandra")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res != "Sandra" {
+		t.Errorf("expected %v, got %v", "Sandra", res)
+	}
+
+	res, err = ctx.LoadString("ARGV.inject { |x,y| x+y }", 1, 2, 3.5)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res != float64(6.5) {
+		t.Errorf("expected %v, got %v", float64(6.5), res)
+	}
+
+	dict := map[string]interface{}{
+		"name": "Oliver",
+		"age":  23,
+	}
+	res, err = ctx.LoadString(`ARGV[0]["age"]`, dict)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res != 23 {
+		t.Errorf("expected %v, got %v", 23, res)
 	}
 }
 
