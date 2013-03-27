@@ -8,17 +8,22 @@ The mruby-go package enables users to use the embedded Ruby interpreter
 This is a work in progress. Read the tests to get a feel of what works
 and what doesn't.
 
-## Getting started
+## Installation
 
-First you need to compile the mruby package. It has been added as a
-submodule of this project. The original repository is located at
-https://github.com/mruby/mruby.git. After compiling mruby, just
-compile the package.
+The mruby repository at https://github.com/mruby/mruby.git is added
+as a submodule. However, you must make sure that include files and
+library paths can be resolved.
 
-Here's a shortcut:
+You can do this either by setting C_INCLUDE_PATH and LIBRARY_PATH 
+manually or adding mruby as a package to your system. The latter is
+obviously preferred, but probably isn't available as mruby is not 
+yet mature.
 
-    make mruby
+Start compiling with:
+
     make compile
+
+## Getting started
 
 See the examples directory or the tests for example usage.
 

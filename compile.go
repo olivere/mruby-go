@@ -4,8 +4,7 @@
 package mruby
 
 /*
-#cgo CFLAGS: -I./mruby/include
-#cgo LDFLAGS: -L./mruby/build/host/lib -lmruby
+#cgo LDFLAGS: -lmruby
 #include <stdlib.h>
 #include <string.h>
 
@@ -68,10 +67,8 @@ func (ctx *Context) LoadString(code string) (interface{}, error) {
 	ccode := C.CString(code)
 	defer C.free(unsafe.Pointer(ccode))
 
-	/*
-		ai := C.mrb_gc_arena_save(ctx.mrb)
-		defer C.mrb_gc_arena_restore(ctx.mrb, ai)
-	*/
+	ai := C.mrb_gc_arena_save(ctx.mrb)
+	defer C.mrb_gc_arena_restore(ctx.mrb, ai)
 
 	result := C.mrb_load_string_cxt(ctx.mrb, ccode, ctx.ctx)
 
