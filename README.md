@@ -3,6 +3,11 @@
 The mruby-go package enables users to use the embedded Ruby interpreter
 [mruby](git://github.com/mruby/mruby.git) inside Google Go projects.
 
+## Status
+
+This is a work in progress. Read the tests to get a feel of what works
+and what doesn't.
+
 ## Getting started
 
 First you need to compile the mruby package. It has been added as a

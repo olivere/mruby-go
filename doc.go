@@ -13,6 +13,8 @@ Notice that mruby is a work in progress. But with the backing of the
 original authors of the Ruby programming language, it is likely to succeed
 in the long run as a way to embed Ruby within larger applications.
 
+You can find the mruby source code at https://github.com/mruby/mruby.
+
 Introduction
 
 Let us all start with a very simple example.
