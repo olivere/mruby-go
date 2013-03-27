@@ -1,9 +1,73 @@
+// Copyright 2013 Oliver Eilhard.
+// Use of this source code is governed by the MIT LICENSE that
+// can be found in the MIT-LICENSE file included in the project.
 package mruby_test
 
 import (
 	mruby "github.com/olivere/mruby-go"
+	"reflect"
 	"testing"
 )
+
+func TestLoadString(t *testing.T) {
+	ctx := mruby.NewContext()
+	if ctx == nil {
+		t.Fatal("expected NewContext() to be != nil")
+	}
+
+	res, err := ctx.LoadString("'Hello world'")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res != "Hello world" {
+		t.Errorf("expected 'Hello world', got %v", res)
+	}
+}
+
+func TestLoadStringWithDifferentResults(t *testing.T) {
+	ctx := mruby.NewContext()
+
+	tests := []struct {
+		Name     string
+		Code     string
+		Expected interface{}
+	}{
+		{"nil", "nil", nil},
+		{"string", "'Oliver'", "Oliver"},
+		{"string2", "\"Oliver\"", "Oliver"},
+		{"int", "42", int64(42)},
+		{"float", "42.3", float64(42.3)},
+		{"symbol", ":oliver", "oliver"},
+		{"array", "['Oliver', 2, 42.3, true, nil]", []interface{}{
+			"Oliver", int64(2), float64(42.3), true, nil,
+		}},
+		{"hash", "{:name => 'Oliver', :age => 21}", map[string]interface{}{
+			"name": "Oliver",
+			"age":  int64(21),
+		}},
+		{"complex hash", "{:name => 'Oliver', 'age' => 21, address: {city: 'Munich'}}", map[string]interface{}{
+			"name": "Oliver",
+			"age":  int64(21),
+			"address": map[string]interface{}{
+				"city": "Munich",
+			},
+		}},
+	}
+
+	for _, test := range tests {
+		res, err := ctx.LoadString(test.Code)
+		if err != nil {
+			t.Fatalf("test %s:\n  %v", test.Name, err)
+		}
+		if reflect.TypeOf(res) != reflect.TypeOf(test.Expected) {
+			t.Errorf("test %s:\n  expected type %v, got type %v",
+				test.Name, reflect.TypeOf(test.Expected), reflect.TypeOf(res))
+		}
+		if !reflect.DeepEqual(res, test.Expected) {
+			t.Errorf("test %s:\n  expected %v, got %v", test.Name, test.Expected, res)
+		}
+	}
+}
 
 func TestParse(t *testing.T) {
 	ctx := mruby.NewContext()

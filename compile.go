@@ -1,10 +1,11 @@
+// Copyright 2013 Oliver Eilhard.
+// Use of this source code is governed by the MIT LICENSE that
+// can be found in the MIT-LICENSE file included in the project.
 package mruby
 
 /*
-#cgo CFLAGS: -I./include
-#cgo darwin LDFLAGS: -L./lib/darwin_amd64
-#cgo linux LDFLAGS: -L./lib/linux_amd64
-#cgo LDFLAGS: -lmruby
+#cgo CFLAGS: -I./mruby/include
+#cgo LDFLAGS: -L./mruby/build/host/lib -lmruby
 #include <stdlib.h>
 #include <string.h>
 
@@ -36,11 +37,6 @@ my_run(mrb_state *mrb, int n) {
 }
 
 int
-my_type(mrb_value v) {
-	return mrb_type(v);
-}
-
-int
 has_exception(mrb_state *mrb) {
 	return mrb->exc != 0;
 }
@@ -65,12 +61,41 @@ import (
 	"unsafe"
 )
 
+// LoadString loads a snippet of Ruby code and returns its output.
+// An error is returned if the interpreter failes or the Ruby code
+// raises an exception.
+func (ctx *Context) LoadString(code string) (interface{}, error) {
+	ccode := C.CString(code)
+	defer C.free(unsafe.Pointer(ccode))
+
+	/*
+		ai := C.mrb_gc_arena_save(ctx.mrb)
+		defer C.mrb_gc_arena_restore(ctx.mrb, ai)
+	*/
+
+	result := C.mrb_load_string(ctx.mrb, ccode)
+
+	if C.has_exception(ctx.mrb) != 0 {
+		msg := C.GoString(C.get_exception_message(ctx.mrb))
+		C.reset_exception(ctx.mrb)
+		return nil, errors.New(msg)
+	}
+
+	//log.Printf("mruby result type: %s\n", rubyTypeOf(ctx, result))
+
+	return ruby2go(ctx, result), nil
+}
+
+// Parser is a parser for Ruby code. It can be used to parse
+// Ruby code once and run it multiple times.
 type Parser struct {
 	ctx    *Context
 	parser *C.struct_mrb_parser_state
 	n      C.int
 }
 
+// Parse parses a string into parsed Ruby code. An error is
+// returned if compilation failes.
 func (ctx *Context) Parse(code string) (*Parser, error) {
 	p := &Parser{ctx: ctx, n: -1}
 
@@ -96,8 +121,9 @@ func (ctx *Context) Parse(code string) (*Parser, error) {
 	return p, nil
 }
 
+// Run runs a previously compiled Ruby code and returns its output.
+// An error is returned if the Ruby code raises an exception.
 func (p *Parser) Run() (interface{}, error) {
-
 	ai := C.mrb_gc_arena_save(p.ctx.mrb)
 	defer C.mrb_gc_arena_restore(p.ctx.mrb, ai)
 
@@ -106,87 +132,8 @@ func (p *Parser) Run() (interface{}, error) {
 	if C.has_exception(p.ctx.mrb) != 0 {
 		msg := C.GoString(C.get_exception_message(p.ctx.mrb))
 		C.reset_exception(p.ctx.mrb)
-		return nil, errors.New(fmt.Sprintf("%s", msg))
+		return nil, errors.New(msg)
 	}
 
 	return ruby2go(p.ctx, result), nil
-}
-
-/*
-func (p *Parser) Parse(code string) (interface{}, error) {
-	//var result C.mrb_value
-
-	ai := C.mrb_gc_arena_save(p.ctx.mrb)
-	defer C.mrb_gc_arena_restore(p.ctx.mrb, ai)
-
-	ccode := C.CString(code)
-	defer C.free(unsafe.Pointer(ccode))
-
-	parser := C.my_parse(p.ctx.mrb, p.ctx.ctx, ccode)
-	defer C.mrb_parser_free(parser)
-
-	if parser.nerr > 0 {
-		lineno := parser.error_buffer[0].lineno
-		msg := C.GoString(parser.error_buffer[0].message)
-		return nil, errors.New(fmt.Sprintf("error: line %d: %s", lineno, msg))
-	}
-
-	n := C.mrb_generate_code(p.ctx.mrb, parser)
-
-	result := C.my_run(p.ctx.mrb, n)
-
-	return ruby2go(p.ctx, result), nil
-}
-*/
-
-func ruby2go(ctx *Context, v C.mrb_value) interface{} {
-	switch C.my_type(v) {
-	case C.MRB_TT_FALSE:
-		return false
-	case C.MRB_TT_FREE:
-		return nil
-	case C.MRB_TT_TRUE:
-		return true
-	case C.MRB_TT_FIXNUM:
-		return nil
-	case C.MRB_TT_SYMBOL:
-		return nil
-	case C.MRB_TT_UNDEF:
-		return nil
-	case C.MRB_TT_FLOAT:
-		return nil
-	case C.MRB_TT_VOIDP:
-		return nil
-	case C.MRB_TT_OBJECT:
-		return nil
-	case C.MRB_TT_CLASS:
-		return nil
-	case C.MRB_TT_MODULE:
-		return nil
-	case C.MRB_TT_ICLASS:
-		return nil
-	case C.MRB_TT_SCLASS:
-		return nil
-	case C.MRB_TT_PROC:
-		return nil
-	case C.MRB_TT_ARRAY:
-		return nil
-	case C.MRB_TT_HASH:
-		return nil
-	case C.MRB_TT_STRING:
-		return C.GoString(C.mrb_string_value_ptr(ctx.mrb, v))
-	case C.MRB_TT_RANGE:
-		return nil
-	case C.MRB_TT_EXCEPTION:
-		return nil
-	case C.MRB_TT_FILE:
-		return nil
-	case C.MRB_TT_ENV:
-		return nil
-	case C.MRB_TT_DATA:
-		return nil
-	case C.MRB_TT_MAXDEFINE:
-		return nil
-	}
-	return nil
 }

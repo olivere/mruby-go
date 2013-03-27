@@ -1,4 +1,4 @@
-.PHONY: all
+.PHONY: all mruby
 
 all: build
 
@@ -10,3 +10,6 @@ test:
 
 bench:
 	go test -test.bench . -ldflags='-linkmode=external'
+
+mruby:
+	pushd mruby && make && popd

@@ -1,11 +1,11 @@
+// Copyright 2013 Oliver Eilhard.
+// Use of this source code is governed by the MIT LICENSE that
+// can be found in the MIT-LICENSE file included in the project.
 package mruby
 
 /*
-#cgo CFLAGS: -I./include
-#cgo darwin LDFLAGS: -L./lib/darwin_amd64
-#cgo linux LDFLAGS: -L./lib/linux_amd64
-#cgo LDFLAGS: -lmruby
-#include <stdlib.h>
+#cgo CFLAGS: -I./mruby/include
+#cgo LDFLAGS: -L./mruby/build/host/lib -lmruby
 #include <stdlib.h>
 #include <string.h>
 
@@ -17,16 +17,16 @@ package mruby
 import "C"
 
 import (
-	"errors"
 	"runtime"
-	"unsafe"
 )
 
+// Context serves as the entry point for all communication with mruby.
 type Context struct {
 	mrb *C.mrb_state
 	ctx *C.mrbc_context
 }
 
+// NewContext creates a new mruby context.
 func NewContext() *Context {
 	ctx := &Context{}
 
@@ -40,13 +40,4 @@ func NewContext() *Context {
 	})
 
 	return ctx
-}
-
-func (ctx *Context) LoadString(script string) (string, error) {
-	cs := C.CString(script)
-	defer C.free(unsafe.Pointer(cs))
-
-	C.mrb_load_string(ctx.mrb, cs)
-
-	return "", errors.New("mruby: not implemented")
 }
