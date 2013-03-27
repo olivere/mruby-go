@@ -233,6 +233,7 @@ func rubyTypeOf(ctx *Context, v C.mrb_value) *rubyType {
 	return typ
 }
 
+// rubyArray2Slice takes a Ruby array and turns it into a Go slice.
 func rubyArray2Slice(ctx *Context, mary C.mrb_value) []interface{} {
 	ary := make([]interface{}, 0)
 

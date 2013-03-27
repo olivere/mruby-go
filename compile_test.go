@@ -31,40 +31,56 @@ func TestLoadStringWithDifferentResults(t *testing.T) {
 		Name     string
 		Code     string
 		Expected interface{}
+		Failure  bool
 	}{
-		{"nil", "nil", nil},
-		{"string", "'Oliver'", "Oliver"},
-		{"string2", "\"Oliver\"", "Oliver"},
-		{"int", "42", int64(42)},
-		{"float", "42.3", float64(42.3)},
-		{"symbol", ":oliver", "oliver"},
+		{"nil", "nil", nil, false},
+		{"string", "'Oliver'", "Oliver", false},
+		{"string2", "\"Oliver\"", "Oliver", false},
+		{"zero int", "0", int64(0), false},
+		{"zero float", "0.0", float64(0.0), false},
+		{"int", "42", int64(42), false},
+		{"float", "42.3", float64(42.3), false},
+		{"symbol", ":oliver", "oliver", false},
 		{"array", "['Oliver', 2, 42.3, true, nil]", []interface{}{
 			"Oliver", int64(2), float64(42.3), true, nil,
-		}},
+		}, false},
 		{"hash", "{:name => 'Oliver', :age => 21}", map[string]interface{}{
 			"name": "Oliver",
 			"age":  int64(21),
-		}},
+		}, false},
 		{"complex hash", "{:name => 'Oliver', 'age' => 21, address: {city: 'Munich'}}", map[string]interface{}{
 			"name": "Oliver",
 			"age":  int64(21),
 			"address": map[string]interface{}{
 				"city": "Munich",
 			},
-		}},
+		}, false},
+		{"exception", "raise 'kaboom'", nil, true},
 	}
 
 	for _, test := range tests {
 		res, err := ctx.LoadString(test.Code)
-		if err != nil {
-			t.Fatalf("test %s:\n  %v", test.Name, err)
-		}
-		if reflect.TypeOf(res) != reflect.TypeOf(test.Expected) {
-			t.Errorf("test %s:\n  expected type %v, got type %v",
-				test.Name, reflect.TypeOf(test.Expected), reflect.TypeOf(res))
-		}
-		if !reflect.DeepEqual(res, test.Expected) {
-			t.Errorf("test %s:\n  expected %v, got %v", test.Name, test.Expected, res)
+		if test.Failure {
+			// test should have failed
+			if err == nil {
+				t.Fatalf("test %s:\n  should have failed", test.Name)
+			}
+			if reflect.TypeOf(res) != reflect.TypeOf(test.Expected) {
+				t.Errorf("test %s:\n  expected type %v, got type %v",
+					test.Name, reflect.TypeOf(test.Expected), reflect.TypeOf(res))
+			}
+		} else {
+			// test should have succeeded
+			if err != nil {
+				t.Fatalf("test %s:\n  %v", test.Name, err)
+			}
+			if reflect.TypeOf(res) != reflect.TypeOf(test.Expected) {
+				t.Errorf("test %s:\n  expected type %v, got type %v",
+					test.Name, reflect.TypeOf(test.Expected), reflect.TypeOf(res))
+			}
+			if !reflect.DeepEqual(res, test.Expected) {
+				t.Errorf("test %s:\n  expected %v, got %v", test.Name, test.Expected, res)
+			}
 		}
 	}
 }

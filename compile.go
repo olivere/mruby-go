@@ -73,7 +73,7 @@ func (ctx *Context) LoadString(code string) (interface{}, error) {
 		defer C.mrb_gc_arena_restore(ctx.mrb, ai)
 	*/
 
-	result := C.mrb_load_string(ctx.mrb, ccode)
+	result := C.mrb_load_string_cxt(ctx.mrb, ccode, ctx.ctx)
 
 	if C.has_exception(ctx.mrb) != 0 {
 		msg := C.GoString(C.get_exception_message(ctx.mrb))
