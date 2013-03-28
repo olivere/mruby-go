@@ -102,8 +102,8 @@ func (ctx *Context) Parse(code string) (*Parser, error) {
 // Run runs a previously compiled Ruby code and returns its output.
 // An error is returned if the Ruby code raises an exception.
 func (p *Parser) Run(args ...interface{}) (interface{}, error) {
-	//ai := C.mrb_gc_arena_save(p.ctx.mrb)
-	//defer C.mrb_gc_arena_restore(p.ctx.mrb, ai)
+	ai := C.mrb_gc_arena_save(p.ctx.mrb)
+	defer C.mrb_gc_arena_restore(p.ctx.mrb, ai)
 
 	// Create ARGV global variable and push the args into it
 	argvAry := C.mrb_ary_new(p.ctx.mrb)
@@ -134,8 +134,8 @@ func (ctx *Context) LoadString(code string, args ...interface{}) (interface{}, e
 	ccode := C.CString(code)
 	defer C.free(unsafe.Pointer(ccode))
 
-	//ai := C.mrb_gc_arena_save(ctx.mrb)
-	//defer C.mrb_gc_arena_restore(ctx.mrb, ai)
+	ai := C.mrb_gc_arena_save(ctx.mrb)
+	defer C.mrb_gc_arena_restore(ctx.mrb, ai)
 
 	// Create ARGV global variable and push the args into it
 	argv := C.CString("ARGV")
