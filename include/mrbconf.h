@@ -27,7 +27,7 @@
 //#define MRB_FUNCALL_ARGC_MAX 16
 
 /* number of object per heap page */
-//#define MRB_HEAP_PAGE_SIZE 1024
+#define MRB_HEAP_PAGE_SIZE 64*1024
 
 /* use segmented list for IV table */
 //#define MRB_USE_IV_SEGLIST
@@ -39,19 +39,19 @@
 //#define MRB_IREP_ARRAY_INIT_SIZE (256u)
 
 /* default size of khash table bucket */
-//#define KHASH_DEFAULT_SIZE 32
+#define KHASH_DEFAULT_SIZE 32
 
 /* allocated memory address alignment */
 //#define POOL_ALIGNMENT 4
 
 /* page size of memory pool */
-//#define POOL_PAGE_SIZE 16000
+#define POOL_PAGE_SIZE 16000
 
 /* initial minimum size for string buffer */
-//#define MRB_STR_BUF_MIN_SIZE 128
+#define MRB_STR_BUF_MIN_SIZE 256
 
 /* array size for parser buffer */
-//#define MRB_PARSER_BUF_SIZE 1024
+#define MRB_PARSER_BUF_SIZE 128*1024
 
 /* -DDISABLE_XXXX to drop following features */
 //#define DISABLE_STDIO		/* use of stdio */

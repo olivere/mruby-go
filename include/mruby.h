@@ -43,9 +43,9 @@ struct mrb_state;
 
 typedef void* (*mrb_allocf) (struct mrb_state *mrb, void*, size_t, void *ud);
 
-#ifndef MRB_ARENA_SIZE
-#define MRB_ARENA_SIZE 100
-#endif
+//#ifndef MRB_ARENA_SIZE
+#define MRB_ARENA_SIZE 1000
+//#endif
 
 typedef struct {
   mrb_sym mid;
