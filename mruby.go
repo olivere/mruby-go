@@ -4,8 +4,7 @@
 package mruby
 
 /*
-#cgo linux LDFLAGS: -lm
-#cgo LDFLAGS: -lmruby
+#cgo pkg-config: mruby
 #include <stdlib.h>
 #include <string.h>
 

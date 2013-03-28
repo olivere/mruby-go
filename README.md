@@ -10,18 +10,44 @@ and what doesn't.
 
 ## Installation
 
-The mruby repository at https://github.com/mruby/mruby.git is added
-as a submodule. However, you must make sure that include files and
-library paths can be resolved.
+Use the latest tip of Google Go to make this work. It all depends
+on [issue 4069](https://code.google.com/p/go/issues/detail?id=4069),
+which will be included in Go 1.1.
 
-You can do this either by setting C_INCLUDE_PATH and LIBRARY_PATH 
-manually or adding mruby as a package to your system. The latter is
-obviously preferred, but probably isn't available as mruby is not 
-yet mature.
+Building mruby-go depends on pkg-config. Make sure to have a valid
+pkg-config file for mruby in your `PKG_CONFIG_PATH`. I've compiled
+mruby locally, so here's my `mruby.pc`:
 
-Start compiling with:
+    prefix=<home>/ext/mruby
+    exec_prefix=${prefix}
+    libdir=${exec_prefix}/build/host/lib
+    includedir=${prefix}/include
+    
+    Name: libmruby
+    Description: Embedded Ruby (mruby)
+    Version: 0.1.0
+    Libs: -L${libdir} -lmruby
+    Libs.private: -lm
+    Cflags: -I${includedir}
 
-    make compile
+Make sure that `pkg-config --list-all` includes `mruby`.
+
+Next, build mruby-go:
+
+    go build
+
+Then run tests with:
+
+    go test
+
+and benchmarks with:
+
+    go test -test.bench .
+
+## mruby
+
+For convenience, the [mruby repository](https://github.com/mruby/mruby.git)
+is added as a submodule.
 
 ## Getting started
 

@@ -1,4 +1,0 @@
-MRUBY_CFLAGS = -g -O3 -Wall -Werror-implicit-function-declaration -I\"/Users/oliver/ext/mruby/include\" -I\"/Users/oliver/ext/mruby-json/include\" -I\"/Users/oliver/ext/mruby/mrbgems/mruby-sprintf/include\" -I\"/Users/oliver/ext/mruby/mrbgems/mruby-print/include\" -I\"/Users/oliver/ext/mruby/mrbgems/mruby-math/include\" -I\"/Users/oliver/ext/mruby/mrbgems/mruby-time/include\" -I\"/Users/oliver/ext/mruby/mrbgems/mruby-struct/include\" -I\"/Users/oliver/ext/mruby/mrbgems/mruby-enum-ext/include\" -I\"/Users/oliver/ext/mruby/mrbgems/mruby-string-ext/include\" -I\"/Users/oliver/ext/mruby/mrbgems/mruby-numeric-ext/include\" -I\"/Users/oliver/ext/mruby/mrbgems/mruby-array-ext/include\" -I\"/Users/oliver/ext/mruby/mrbgems/mruby-hash-ext/include\" -I\"/Users/oliver/ext/mruby/mrbgems/mruby-random/include\"
-MRUBY_LDFLAGS = 
-MRUBY_LDFLAGS_BEFORE_LIBS = 
-MRUBY_LIBS = -lm
