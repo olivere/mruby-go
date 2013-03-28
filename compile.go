@@ -4,9 +4,7 @@
 package mruby
 
 /*
-#cgo CFLAGS: -I./include
-#cgo darwin LDFLAGS: -L./lib/darwin_x64
-#cgo linux LDFLAGS: -L./lib/linux_x64 -lm
+#cgo linux LDFLAGS: -lm
 #cgo LDFLAGS: -lmruby
 #include <stdlib.h>
 #include <string.h>
