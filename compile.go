@@ -4,6 +4,9 @@
 package mruby
 
 /*
+#cgo CFLAGS: -I./include
+#cgo darwin LDFLAGS: -L./lib/darwin_x64
+#cgo linux LDFLAGS: -L./lib/linux_x64 -lm
 #cgo LDFLAGS: -lmruby
 #include <stdlib.h>
 #include <string.h>
@@ -99,16 +102,16 @@ func (ctx *Context) Parse(code string) (*Parser, error) {
 // Run runs a previously compiled Ruby code and returns its output.
 // An error is returned if the Ruby code raises an exception.
 func (p *Parser) Run(args ...interface{}) (interface{}, error) {
-	ai := C.mrb_gc_arena_save(p.ctx.mrb)
-	defer C.mrb_gc_arena_restore(p.ctx.mrb, ai)
+	//ai := C.mrb_gc_arena_save(p.ctx.mrb)
+	//defer C.mrb_gc_arena_restore(p.ctx.mrb, ai)
 
 	// Create ARGV global variable and push the args into it
-	argv := C.CString("ARGV")
-	defer C.free(unsafe.Pointer(argv))
 	argvAry := C.mrb_ary_new(p.ctx.mrb)
 	for i := 0; i < len(args); i++ {
 		C.mrb_ary_push(p.ctx.mrb, argvAry, go2ruby(p.ctx, args[i]))
 	}
+	argv := C.CString("ARGV")
+	defer C.free(unsafe.Pointer(argv))
 	C.mrb_define_global_const(p.ctx.mrb, argv, argvAry)
 
 	// Run the code
@@ -131,8 +134,8 @@ func (ctx *Context) LoadString(code string, args ...interface{}) (interface{}, e
 	ccode := C.CString(code)
 	defer C.free(unsafe.Pointer(ccode))
 
-	ai := C.mrb_gc_arena_save(ctx.mrb)
-	defer C.mrb_gc_arena_restore(ctx.mrb, ai)
+	//ai := C.mrb_gc_arena_save(ctx.mrb)
+	//defer C.mrb_gc_arena_restore(ctx.mrb, ai)
 
 	// Create ARGV global variable and push the args into it
 	argv := C.CString("ARGV")
