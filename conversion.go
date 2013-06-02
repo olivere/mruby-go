@@ -32,6 +32,11 @@ get_float(mrb_value v) {
 	return mrb_float(v);
 }
 
+mrb_value
+get_float_value(mrb_state *mrb, mrb_float f) {
+	return mrb_float_value(mrb, f);
+}
+
 mrb_int
 get_fixnum(mrb_value v) {
 	return mrb_fixnum(v);
@@ -171,7 +176,8 @@ func go2ruby(ctx *Context, v interface{}) C.mrb_value {
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
 		return C.mrb_fixnum_value(C.mrb_int(kv.Int()))
 	case reflect.Float32, reflect.Float64:
-		return C.mrb_float_value(C.mrb_float(kv.Float()))
+		return C.get_float_value(ctx.mrb, C.mrb_float(kv.Float()))
+		//return C.mrb_float_value(ctx.mrb, C.mrb_float(kv.Float()))
 	case reflect.String:
 		cs := C.CString(kv.String())
 		defer C.free(unsafe.Pointer(cs))
