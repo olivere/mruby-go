@@ -137,7 +137,7 @@ func (ctx *Context) LoadString(code string, args ...interface{}) (interface{}, e
 	// Create ARGV global variable and push the args into it
 	argv := C.CString("ARGV")
 	defer C.free(unsafe.Pointer(argv))
-	argvAry := C.mrb_ary_new(ctx.mrb)
+	argvAry := C.mrb_ary_new_capa(ctx.mrb, C.mrb_int(len(args)))
 	for i := 0; i < len(args); i++ {
 		C.mrb_ary_push(ctx.mrb, argvAry, go2ruby(ctx, args[i]))
 	}
