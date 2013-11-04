@@ -34,5 +34,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Fprintf(os.Stdout, "%v\n", res)
+	if res != nil {
+	    fmt.Fprintf(os.Stdout, "%v\n", res)
+	}
 }
