@@ -28,11 +28,20 @@ my_parse(mrb_state *mrb, mrbc_context *ctx, char *ruby_code) {
 	return parser;
 }
 
+//mrb_value
+//my_run(mrb_state *mrb, int n) {
+//	return mrb_run(mrb,
+//		mrb_proc_new(mrb, mrb->irep[n]),
+//		mrb_top_self(mrb)
+//	);
+//}
+
 mrb_value
-my_run(mrb_state *mrb, int n) {
-	return mrb_run(mrb,
-		mrb_proc_new(mrb, mrb->irep[n]),
-		mrb_top_self(mrb)
+my_run(mrb_state *mrb, struct RProc *proc) {
+	return mrb_context_run(mrb,
+		proc,
+		mrb_top_self(mrb),
+		proc->body.irep->nregs
 	);
 }
 
@@ -66,13 +75,13 @@ import (
 type Parser struct {
 	ctx    *Context
 	parser *C.struct_mrb_parser_state
-	n      C.int
+	proc   *C.struct_RProc
 }
 
 // Parse parses a string into parsed Ruby code. An error is
 // returned if compilation failes.
 func (ctx *Context) Parse(code string) (*Parser, error) {
-	p := &Parser{ctx: ctx, n: -1}
+	p := &Parser{ctx: ctx}
 
 	ccode := C.CString(code)
 	defer C.free(unsafe.Pointer(ccode))
@@ -82,13 +91,15 @@ func (ctx *Context) Parse(code string) (*Parser, error) {
 	if p.parser.nerr > 0 {
 		lineno := p.parser.error_buffer[0].lineno
 		msg := C.GoString(p.parser.error_buffer[0].message)
-		return nil, errors.New(fmt.Sprintf("error: line %d: %s", lineno, msg))
+		return nil, fmt.Errorf("error: line %d: %s", lineno, msg)
 	}
 
-	p.n = C.mrb_generate_code(p.ctx.mrb, p.parser)
+	p.proc = C.mrb_generate_code(p.ctx.mrb, p.parser)
 
 	runtime.SetFinalizer(p, func(p *Parser) {
 		if p.parser != nil {
+			// TODO free p.proc? Can't find the reverse of mrb_generate_code.
+			// Maybe it's released with the parser.
 			C.mrb_parser_free(p.parser)
 		}
 	})
@@ -103,7 +114,7 @@ func (p *Parser) Run(args ...interface{}) (interface{}, error) {
 	defer C.mrb_gc_arena_restore(p.ctx.mrb, ai)
 
 	// Create ARGV global variable and push the args into it
-	argvAry := C.mrb_ary_new(p.ctx.mrb)
+	argvAry := C.mrb_ary_new_capa(p.ctx.mrb, C.mrb_int(len(args)))
 	for i := 0; i < len(args); i++ {
 		C.mrb_ary_push(p.ctx.mrb, argvAry, go2ruby(p.ctx, args[i]))
 	}
@@ -112,7 +123,7 @@ func (p *Parser) Run(args ...interface{}) (interface{}, error) {
 	C.mrb_define_global_const(p.ctx.mrb, argv, argvAry)
 
 	// Run the code
-	result := C.my_run(p.ctx.mrb, p.n)
+	result := C.my_run(p.ctx.mrb, p.proc)
 
 	// Check for exception
 	if C.has_exception(p.ctx.mrb) != 0 {
