@@ -1,28 +1,32 @@
 # Ruby for Google Go
 
-The mruby-go package enables users to use the embedded Ruby interpreter
-[mruby](git://github.com/mruby/mruby.git) inside Google Go projects.
+The [mruby-go](https://github.com/olivere/mruby-go) package enables you
+to use the embedded Ruby interpreter [mruby](https://github.com/mruby/mruby)
+inside Google Go projects.
 
-## Status
+## Prerequisites
 
-This is a work in progress. Read the tests to get a feel of what works
-and what doesn't.
+We're using mruby-go with Google Go 1.2, but it should work with 1.1+ and
+tip as well. The mruby interpreter went
+[1.0.0](http://www.mruby.org/releases/2014/02/09/mruby-1.0.0-released.html)
+on 9th Feb 2014, and we have tested it with that version successfully.
+
+We're using mruby-go in production and are pretty confident that it behaves
+as a good citizen. But we don't give any guarantees.
+
+Read the tests to get a feel of what works and what doesn't.
 
 ## Installation
 
-Use the latest tip of Google Go to make this work. It all depends
-on [issue 4069](https://code.google.com/p/go/issues/detail?id=4069),
-which will be included in Go 1.1.
-
-Building mruby-go depends on pkg-config. Make sure to have a valid
-pkg-config file for mruby in your `PKG_CONFIG_PATH`. I've compiled
-mruby locally, so here's my `mruby.pc`:
+Building mruby-go depends on [pkg-config](http://www.freedesktop.org/wiki/Software/pkg-config/).
+Make sure to have a valid pkg-config file for mruby in your
+`PKG_CONFIG_PATH`. I've compiled mruby locally, so here's my `mruby.pc`:
 
     prefix=<home>/ext/mruby
     exec_prefix=${prefix}
     libdir=${exec_prefix}/build/host/lib
     includedir=${prefix}/include
-    
+
     Name: libmruby
     Description: Embedded Ruby (mruby)
     Version: 0.1.0
@@ -44,14 +48,13 @@ and benchmarks with:
 
     go test -test.bench .
 
-## mruby
-
-For convenience, the [mruby repository](https://github.com/mruby/mruby.git)
-is added as a submodule.
-
 ## Getting started
 
 See the examples directory or the tests for example usage.
+
+# Support
+
+Feel free to send pull requests.
 
 # License
 

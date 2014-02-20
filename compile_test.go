@@ -1,4 +1,4 @@
-// Copyright 2013 Oliver Eilhard.
+// Copyright 2013-2014 Oliver Eilhard.
 // Use of this source code is governed by the MIT LICENSE that
 // can be found in the MIT-LICENSE file included in the project.
 package mruby_test
