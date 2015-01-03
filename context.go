@@ -201,6 +201,7 @@ func (ctx *Context) ToValue(value interface{}) (Value, error) {
 		if valof.IsNil() {
 			return Value{ctx: ctx, v: C.mrb_nil_value()}, nil
 		}
+		valof = valof.Elem()
 	}
 	switch valof.Kind() {
 	case reflect.Bool:

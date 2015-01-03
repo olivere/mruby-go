@@ -359,16 +359,19 @@ func TestArrayOfHashes(t *testing.T) {
 		{
 			"a": 1,
 			"b": 2,
+			"c": nil,
 		},
 		{
 			"a": 17,
 			"b": 4,
+			"c": nil,
 		},
 	}
 
 	script := `
 ARGV[0].each do |hsh|
-	hsh[:c] = hsh["a"] + hsh["b"]
+	hsh[:add]  = hsh["a"].to_i + hsh["b"].to_i + hsh["c"].to_i
+	hsh["sub"] = hsh["a"].to_i - hsh["b"].to_i + hsh["c"].to_i
 end
 `
 
@@ -410,8 +413,22 @@ end
 	if !found {
 		t.Errorf("expected entry %q", "c")
 	}
-	if c != 3 {
-		t.Errorf("expected entry %q = %d; got: %d", "c", 3, c)
+	if c != nil {
+		t.Errorf("expected entry %q = %v; got: %v", "c", nil, c)
+	}
+	add, found := ent["add"]
+	if !found {
+		t.Errorf("expected entry %q", "add")
+	}
+	if add != 3 {
+		t.Errorf("expected entry %q = %d; got: %d", "add", 3, add)
+	}
+	sub, found := ent["sub"]
+	if !found {
+		t.Errorf("expected entry %q", "sub")
+	}
+	if sub != -1 {
+		t.Errorf("expected entry %q = %d; got: %d", "sub", -1, sub)
 	}
 
 	ent, ok = got[1].(map[string]interface{})
@@ -436,7 +453,21 @@ end
 	if !found {
 		t.Errorf("expected entry %q", "c")
 	}
-	if c != 21 {
-		t.Errorf("expected entry %q = %d; got: %d", "c", 21, c)
+	if c != nil {
+		t.Errorf("expected entry %q = %v; got: %v", "c", nil, c)
+	}
+	add, found = ent["add"]
+	if !found {
+		t.Errorf("expected entry %q", "add")
+	}
+	if add != 21 {
+		t.Errorf("expected entry %q = %d; got: %d", "add", 21, add)
+	}
+	sub, found = ent["sub"]
+	if !found {
+		t.Errorf("expected entry %q", "sub")
+	}
+	if sub != 13 {
+		t.Errorf("expected entry %q = %d; got: %d", "sub", 13, sub)
 	}
 }
