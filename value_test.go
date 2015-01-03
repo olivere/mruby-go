@@ -348,3 +348,95 @@ func TestExceptionType(t *testing.T) {
 		t.Fatal("expected error")
 	}
 }
+
+func TestArrayOfHashes(t *testing.T) {
+	ctx := NewContext()
+	if ctx == nil {
+		t.Fatal("expected NewContext() to be != nil")
+	}
+
+	in := []map[string]interface{}{
+		{
+			"a": 1,
+			"b": 2,
+		},
+		{
+			"a": 17,
+			"b": 4,
+		},
+	}
+
+	script := `
+ARGV[0].each do |hsh|
+	hsh[:c] = hsh["a"] + hsh["b"]
+end
+`
+
+	val, err := ctx.LoadString(script, in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !val.IsArray() {
+		t.Errorf("expected type Array; got: %v", val.Type())
+	}
+
+	got, err := val.ToArray()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 2 {
+		t.Fatalf("expected %d entries; got: %d", 2, len(got))
+	}
+
+	ent, ok := got[0].(map[string]interface{})
+	if !ok {
+		t.Fatal("expected entry to be a map")
+	}
+	a, found := ent["a"]
+	if !found {
+		t.Errorf("expected entry %q", "a")
+	}
+	if a != 1 {
+		t.Errorf("expected entry %q = %d; got: %d", "a", 1, a)
+	}
+	b, found := ent["b"]
+	if !found {
+		t.Errorf("expected entry %q", "b")
+	}
+	if b != 2 {
+		t.Errorf("expected entry %q = %d; got: %d", "b", 2, b)
+	}
+	c, found := ent["c"]
+	if !found {
+		t.Errorf("expected entry %q", "c")
+	}
+	if c != 3 {
+		t.Errorf("expected entry %q = %d; got: %d", "c", 3, c)
+	}
+
+	ent, ok = got[1].(map[string]interface{})
+	if !ok {
+		t.Fatal("expected entry to be a map")
+	}
+	a, found = ent["a"]
+	if !found {
+		t.Errorf("expected entry %q", "a")
+	}
+	if a != 17 {
+		t.Errorf("expected entry %q = %d; got: %d", "a", 17, a)
+	}
+	b, found = ent["b"]
+	if !found {
+		t.Errorf("expected entry %q", "b")
+	}
+	if b != 4 {
+		t.Errorf("expected entry %q = %d; got: %d", "b", 4, b)
+	}
+	c, found = ent["c"]
+	if !found {
+		t.Errorf("expected entry %q", "c")
+	}
+	if c != 21 {
+		t.Errorf("expected entry %q = %d; got: %d", "c", 21, c)
+	}
+}
