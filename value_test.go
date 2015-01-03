@@ -471,3 +471,27 @@ end
 		t.Errorf("expected entry %q = %d; got: %d", "sub", 13, sub)
 	}
 }
+
+func TestPointerTypes(t *testing.T) {
+	ctx := NewContext()
+	if ctx == nil {
+		t.Fatal("expected NewContext() to be != nil")
+	}
+
+	one := 42
+	args := map[string]interface{}{"x": &one}
+	val, err := ctx.LoadString("ARGV[0]['x']", args)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !val.IsFixnum() {
+		t.Errorf("expected type Fixnum; got: %v", val.Type())
+	}
+	i, err := val.ToInt()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if i != 42 {
+		t.Errorf("expected %d; got: %d", 42, i)
+	}
+}
