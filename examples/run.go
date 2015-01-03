@@ -28,13 +28,13 @@ func main() {
 	}
 
 	ctx := mruby.NewContext()
-	res, err := ctx.LoadString(string(script))
+	res, err := ctx.LoadStringResult(string(script))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
 
 	if res != nil {
-	    fmt.Fprintf(os.Stdout, "%v\n", res)
+		fmt.Fprintf(os.Stdout, "%v\n", res)
 	}
 }
