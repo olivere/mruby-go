@@ -4,6 +4,10 @@ The [mruby-go](https://github.com/olivere/mruby-go) package enables you
 to use the embedded Ruby interpreter [mruby](https://github.com/mruby/mruby)
 inside Google Go projects.
 
+[![Build Status](https://travis-ci.org/olivere/mruby-go.svg?branch=master)](https://travis-ci.org/olivere/mruby-go)
+[![Godoc](http://img.shields.io/badge/godoc-reference-blue.svg?style=flat)](https://godoc.org/github.com/olivere/mruby-go)
+[![license](http://img.shields.io/badge/license-MIT-red.svg?style=flat)](https://raw.githubusercontent.com/olivere/mruby-go/master/MIT-LICENSE)
+
 ## Prerequisites
 
 We're using mruby-go with Google Go 1.4, but it should work with 1.1+ and
