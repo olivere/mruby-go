@@ -152,92 +152,23 @@ func (ctx *Context) LoadStringResult(code string, args ...interface{}) (interfac
 // ToValue stores the given value for encoding/decoding from/to Go and MRuby.
 func (ctx *Context) ToValue(value interface{}) (Value, error) {
 	valof := reflect.ValueOf(value)
-
-	// Check for Go type
-	switch value := value.(type) {
-	case Value:
-		return value, nil
-	case bool:
-		if value {
-			return Value{ctx: ctx, v: C.mrb_true_value()}, nil
-		} else {
-			return Value{ctx: ctx, v: C.mrb_false_value()}, nil
-		}
-	case int:
-		return Value{ctx: ctx, v: C.mrb_fixnum_value(C.mrb_int(value))}, nil
-	case int8:
-		return Value{ctx: ctx, v: C.mrb_fixnum_value(C.mrb_int(value))}, nil
-	case int16:
-		return Value{ctx: ctx, v: C.mrb_fixnum_value(C.mrb_int(value))}, nil
-	case int32:
-		return Value{ctx: ctx, v: C.mrb_fixnum_value(C.mrb_int(value))}, nil
-	case int64:
-		return Value{ctx: ctx, v: C.mrb_fixnum_value(C.mrb_int(value))}, nil
-	case uint:
-		return Value{ctx: ctx, v: C.mrb_fixnum_value(C.mrb_int(value))}, nil
-	case uint8:
-		return Value{ctx: ctx, v: C.mrb_fixnum_value(C.mrb_int(value))}, nil
-	case uint16:
-		return Value{ctx: ctx, v: C.mrb_fixnum_value(C.mrb_int(value))}, nil
-	case uint32:
-		return Value{ctx: ctx, v: C.mrb_fixnum_value(C.mrb_int(value))}, nil
-	case uint64:
-		return Value{ctx: ctx, v: C.mrb_fixnum_value(C.mrb_int(value))}, nil
-	case float32:
-		return Value{ctx: ctx, v: C.get_float_value(ctx.mrb, C.mrb_float(value))}, nil
-	case float64:
-		return Value{ctx: ctx, v: C.get_float_value(ctx.mrb, C.mrb_float(value))}, nil
-	case string:
-		cs := C.CString(value)
+	switch valof.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return Value{ctx: ctx, v: C.mrb_fixnum_value(C.mrb_int(valof.Int()))}, nil
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		return Value{ctx: ctx, v: C.mrb_fixnum_value(C.mrb_int(valof.Uint()))}, nil
+	case reflect.Float32, reflect.Float64:
+		return Value{ctx: ctx, v: C.get_float_value(ctx.mrb, C.mrb_float(valof.Float()))}, nil
+	case reflect.String:
+		cs := C.CString(valof.String())
 		defer C.free(unsafe.Pointer(cs))
 		return Value{ctx: ctx, v: C.mrb_str_new_cstr(ctx.mrb, cs)}, nil
-	case nil:
-		return NilValue(ctx), nil
-	}
-
-	// Use reflection for drilling down to the kind of value
-	for valof.Kind() == reflect.Ptr {
-		// We drill down until we get a non-ptr.
-		if valof.IsNil() {
-			return Value{ctx: ctx, v: C.mrb_nil_value()}, nil
-		}
-		valof = valof.Elem()
-	}
-	switch valof.Kind() {
 	case reflect.Bool:
 		if valof.Bool() {
 			return Value{ctx: ctx, v: C.mrb_true_value()}, nil
 		} else {
 			return Value{ctx: ctx, v: C.mrb_false_value()}, nil
 		}
-	case reflect.Int:
-		return Value{ctx: ctx, v: C.mrb_fixnum_value(C.mrb_int(valof.Int()))}, nil
-	case reflect.Int8:
-		return Value{ctx: ctx, v: C.mrb_fixnum_value(C.mrb_int(valof.Int()))}, nil
-	case reflect.Int16:
-		return Value{ctx: ctx, v: C.mrb_fixnum_value(C.mrb_int(valof.Int()))}, nil
-	case reflect.Int32:
-		return Value{ctx: ctx, v: C.mrb_fixnum_value(C.mrb_int(valof.Int()))}, nil
-	case reflect.Int64:
-		return Value{ctx: ctx, v: C.mrb_fixnum_value(C.mrb_int(valof.Int()))}, nil
-	case reflect.Uint:
-		return Value{ctx: ctx, v: C.mrb_fixnum_value(C.mrb_int(valof.Int()))}, nil
-	case reflect.Uint8:
-		return Value{ctx: ctx, v: C.mrb_fixnum_value(C.mrb_int(valof.Int()))}, nil
-	case reflect.Uint16:
-		return Value{ctx: ctx, v: C.mrb_fixnum_value(C.mrb_int(valof.Int()))}, nil
-	case reflect.Uint32:
-		return Value{ctx: ctx, v: C.mrb_fixnum_value(C.mrb_int(valof.Int()))}, nil
-	case reflect.Uint64:
-		return Value{ctx: ctx, v: C.mrb_fixnum_value(C.mrb_int(valof.Int()))}, nil
-	case reflect.Float32:
-		return Value{ctx: ctx, v: C.get_float_value(ctx.mrb, C.mrb_float(valof.Float()))}, nil
-	case reflect.Float64:
-		return Value{ctx: ctx, v: C.get_float_value(ctx.mrb, C.mrb_float(valof.Float()))}, nil
-	case reflect.String:
-		cs := C.CString(valof.String())
-		defer C.free(unsafe.Pointer(cs))
-		return Value{ctx: ctx, v: C.mrb_str_new_cstr(ctx.mrb, cs)}, nil
 	case reflect.Array, reflect.Slice:
 		ary := C.mrb_ary_new(ctx.mrb)
 		for i := 0; i < valof.Len(); i++ {
@@ -265,6 +196,14 @@ func (ctx *Context) ToValue(value interface{}) (Value, error) {
 		return Value{ctx: ctx, v: hsh}, nil
 	case reflect.Interface:
 		return ctx.ToValue(valof.Elem().Interface())
+	case reflect.Ptr:
+		// Drill down.
+		if valof.IsNil() {
+			return NilValue(ctx), nil
+		} else {
+			valof = valof.Elem()
+			return ctx.ToValue(valof.Interface())
+		}
 	}
 	return NilValue(ctx), nil
 }

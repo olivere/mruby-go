@@ -478,7 +478,7 @@ func TestPointerTypes(t *testing.T) {
 		t.Fatal("expected NewContext() to be != nil")
 	}
 
-	one := 42
+	one := int(42)
 	args := map[string]interface{}{"x": &one}
 	val, err := ctx.LoadString("ARGV[0]['x']", args)
 	if err != nil {
