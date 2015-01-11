@@ -6,6 +6,7 @@ package mruby
 
 import (
 	"testing"
+	"time"
 )
 
 func TestNewContext(t *testing.T) {
@@ -161,6 +162,33 @@ func TestNoExecError(t *testing.T) {
 	}
 	if e.Error() != expected {
 		t.Errorf("expected %q; got: %q", expected, e.Error())
+	}
+}
+
+func TestTimeout(t *testing.T) {
+	ctx := NewContext()
+	if ctx == nil {
+		t.Fatal("expected NewContext() to be != nil")
+	}
+
+	done := make(chan bool, 1)
+
+	go func() {
+		ctx.LoadString("loop {}")
+		done <- true
+	}()
+
+	var completed bool
+	select {
+	case <-done:
+		completed = true
+		break
+	case <-time.After(1 * time.Second):
+		completed = false
+	}
+
+	if completed {
+		t.Fatal("expected to time out, but script completed")
 	}
 }
 
