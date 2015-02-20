@@ -10,6 +10,9 @@ package mruby
 */
 import "C"
 
+// Args is used to specify the number of arguments a Go extension method
+// will use. Use one of the ArgsAny, ArgsNone, ArgsRequired, ArgsOptional,
+// or ArgsArg helper functions to initialize it.
 type Args C.mrb_aspec
 
 // ArgsAny specifies a function with any number of arguments.

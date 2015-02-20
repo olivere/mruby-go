@@ -22,49 +22,57 @@ type Module struct {
 
 // NewModule defines a new module with the given name under outer.
 // If outer is nil, the registered module is a top-level module.
-func NewModule(ctx *Context, name string, outer *Module) (*Module, error) {
+func NewModule(ctx *Context, name string, outer RClass) (*Module, error) {
 	cname := C.CString(name)
 	defer C.free(unsafe.Pointer(cname))
 	if outer == nil {
 		outer = ctx.ObjectModule()
 	}
-	module := C.mrb_define_module_under(ctx.mrb, outer.module, cname)
+	module := C.mrb_define_module_under(ctx.mrb, outer.RClass(), cname)
 	return &Module{ctx: ctx, module: module}, nil
+}
+
+// RClass returns the MRuby object of type *struct RClass.
+func (m *Module) RClass() *C.struct_RClass {
+	return m.module
 }
 
 // DefineModule defines a new module with the given name under outer.
 // If outer is nil, the registered module is a top-level module.
-func (ctx *Context) DefineModule(name string, outer *Module) (*Module, error) {
+func (ctx *Context) DefineModule(name string, outer RClass) (*Module, error) {
 	return NewModule(ctx, name, outer)
 }
 
 // HasModule tests if the context has a module with the given name.
-func (ctx *Context) HasModule(name string, outer *Module) bool {
-	/*
-		cname := C.CString(name)
-		defer C.free(unsafe.Pointer(cname))
-		flag := C.my_mrb_const_defined_at(ctx.mrb, cname)
-		return flag == C.mrb_bool(1)
-	*/
-	_, found := ctx.GetModule(name, outer)
-	return found
+func (ctx *Context) HasModule(name string, outer RClass) bool {
+	cname := C.CString(name)
+	defer C.free(unsafe.Pointer(cname))
+	var klass *C.struct_RClass
+	if outer != nil {
+		klass = outer.RClass()
+	}
+	flag := C.my_mrb_has_module(ctx.mrb, klass, cname)
+	return flag == C.mrb_bool(1)
 }
 
 // GetModule returns the given module.
-func (ctx *Context) GetModule(name string, outer *Module) (*Module, bool) {
+func (ctx *Context) GetModule(name string, outer RClass) (*Module, bool) {
+	if !ctx.HasModule(name, outer) {
+		return nil, false
+	}
 	cname := C.CString(name)
 	defer C.free(unsafe.Pointer(cname))
 	if outer == nil {
 		outer = ctx.ObjectModule()
 	}
-	class := C.mrb_module_get_under(ctx.mrb, outer.module, cname)
+	module := C.mrb_module_get_under(ctx.mrb, outer.RClass(), cname)
 	if C.has_exception(ctx.mrb) != 0 {
 		return nil, false
 	}
-	if class == nil {
+	if module == nil {
 		return nil, false
 	}
-	return &Module{ctx: ctx, module: class}, true
+	return &Module{ctx: ctx, module: module}, true
 }
 
 // DefineMethod registers a method with the name in the module.

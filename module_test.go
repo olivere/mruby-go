@@ -53,28 +53,24 @@ func TestDefineModuleScoping(t *testing.T) {
 		t.Fatal("expected NewContext() to be != nil")
 	}
 
-	var found bool
-	/*
-		This will raise an error which must be captured.
-		_, found = ctx.GetModule("MissingModule", nil)
-		if found {
-			t.Fatalf("expected to not find module %q; got: %v", "MissingModule", found)
-		}
-	*/
+	_, found := ctx.GetModule("MissingModule", nil)
+	if found {
+		t.Errorf("expected to not find module %q; got: %v", "MissingModule", found)
+	}
 
 	outer, err := ctx.DefineModule("Outer", nil)
 	if err != nil {
 		t.Fatalf("expected no error; got: %v", err)
 	}
 	if outer == nil {
-		t.Errorf("expected outer module; got: %v", outer)
+		t.Fatalf("expected outer module; got: %v", outer)
 	}
 	_, found = ctx.GetModule("Outer", nil)
 	if !found {
-		t.Fatalf("expected to find module %q; got: %v", "Outer", found)
+		t.Errorf("expected to find module %q; got: %v", "Outer", found)
 	}
 	if !ctx.HasModule("Outer", nil) {
-		t.Fatalf("expected to find module %q", "Outer")
+		t.Errorf("expected to find module %q", "Outer")
 	}
 
 	inner, err := ctx.DefineModule("Inner", outer)
@@ -82,20 +78,18 @@ func TestDefineModuleScoping(t *testing.T) {
 		t.Fatalf("expected no error; got: %v", err)
 	}
 	if inner == nil {
-		t.Errorf("expected inner module; got: %v", inner)
+		t.Fatalf("expected inner module; got: %v", inner)
 	}
 	_, found = ctx.GetModule("Inner", outer)
 	if !found {
-		t.Fatalf("expected to find module %q; got: %v", "Outer::Inner", found)
+		t.Errorf("expected to find module %q; got: %v", "Outer::Inner", found)
 	}
-	/*
-		_, found = ctx.GetModule("Inner", nil)
-		if found {
-			t.Fatalf("expected to not find module %q; got: %v", "::Inner", found)
-		}
-	*/
+	_, found = ctx.GetModule("Inner", nil)
+	if found {
+		t.Errorf("expected to not find module %q; got: %v", "::Inner", found)
+	}
 	if !ctx.HasModule("Inner", outer) {
-		t.Fatalf("expected to find module %q", "Outer::Inner")
+		t.Errorf("expected to find module %q", "Outer::Inner")
 	}
 }
 

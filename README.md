@@ -58,7 +58,14 @@ and benchmarks with:
 
 ## Getting started
 
-See the examples directory or the tests for example usage.
+See the examples directory or the tests for example usage. You can run the
+examples after successfully building mruby and mruby-go.
+
+Example:
+
+```go
+go run examples/run.go examples/hello_world.rb
+```
 
 # <a name="mruby-config">Configuring mruby</a>
 

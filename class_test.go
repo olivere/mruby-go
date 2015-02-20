@@ -47,55 +47,91 @@ func TestDefineClass(t *testing.T) {
 	}
 }
 
-func TestDefineClassScoping(t *testing.T) {
+func TestHasClassAndGetClassFailWhenMissing(t *testing.T) {
 	ctx := NewContext()
 	if ctx == nil {
 		t.Fatal("expected NewContext() to be != nil")
 	}
 
-	var found bool
-	/*
-		This will raise an error which must be captured.
-		_, found = ctx.GetModule("MissingClass", nil)
-		if found {
-			t.Fatalf("expected to not find class %q; got: %v", "MissingClass", found)
-		}
-	*/
+	found := ctx.HasClass("MissingClass", nil)
+	if found {
+		t.Errorf("expected to not find class %q; got: %v", "MissingClass", found)
+	}
 
-	outer, err := ctx.DefineClass("Outer", nil)
+	class, found := ctx.GetClass("MissingClass", nil)
+	if found {
+		t.Errorf("expected to not find class %q; got: %v", "MissingClass", found)
+	}
+	if class != nil {
+		t.Fatalf("expected to return nil for missing class; got: %v", class)
+	}
+}
+
+func TestDefineClassOnTopLevel(t *testing.T) {
+	ctx := NewContext()
+	if ctx == nil {
+		t.Fatal("expected NewContext() to be != nil")
+	}
+
+	class, err := ctx.DefineClass("MyClass", nil)
 	if err != nil {
 		t.Fatalf("expected no error; got: %v", err)
 	}
-	if outer == nil {
-		t.Errorf("expected outer class; got: %v", outer)
+	if class == nil {
+		t.Fatalf("expected class; got: %v", class)
 	}
-	_, found = ctx.GetClass("Outer", nil)
+	_, found := ctx.GetClass("MyClass", nil)
 	if !found {
-		t.Fatalf("expected to find class %q; got: %v", "Outer", found)
+		t.Errorf("expected to find class %q; got: %v", "MyClass", found)
 	}
-	if !ctx.HasClass("Outer", nil) {
-		t.Fatalf("expected to find class %q", "Outer")
+	found = ctx.HasClass("MyClass", nil)
+	if !found {
+		t.Errorf("expected to find class %q; got: %v", "MyClass", found)
+	}
+}
+
+func TestDefineClassesInModule(t *testing.T) {
+	ctx := NewContext()
+	if ctx == nil {
+		t.Fatal("expected NewContext() to be != nil")
 	}
 
-	inner, err := ctx.DefineClass("Inner", outer)
+	module, err := ctx.DefineModule("MyModule", nil)
+	if err != nil {
+		t.Fatalf("expected to define module; got: %v", err)
+	}
+	if module == nil {
+		t.Fatalf("expected module; got: %v", module)
+	}
+
+	// This defines a class MyModule::MyClass
+	class, err := ctx.DefineClassUnder("MyClass", nil, module)
 	if err != nil {
 		t.Fatalf("expected no error; got: %v", err)
 	}
-	if inner == nil {
-		t.Errorf("expected inner class; got: %v", inner)
+	if class == nil {
+		t.Fatalf("expected class; got: %v", class)
 	}
-	_, found = ctx.GetClass("Inner", outer)
+	_, found := ctx.GetClass("MyClass", module)
 	if !found {
-		t.Fatalf("expected to find class %q; got: %v", "Outer::Inner", found)
+		t.Errorf("expected to find class %q; got: %v", "MyModule::MyClass", found)
 	}
-	/*
-		_, found = ctx.GetClass("Inner", nil)
-		if found {
-			t.Fatalf("expected to not find class %q; got: %v", "::Inner", found)
-		}
-	*/
-	if !ctx.HasClass("Inner", outer) {
-		t.Fatalf("expected to find class %q", "Outer::Inner")
+	found = ctx.HasClass("MissingClass", module)
+	if found {
+		t.Errorf("expected to not find class %q; got: %v", "MyModule::MissingClass", found)
+	}
+
+	// This defines a class MyModule::MyDerivedClass, derived from MyClass
+	derived, err := ctx.DefineClassUnder("MyDerivedClass", class, module)
+	if err != nil {
+		t.Fatalf("expected no error; got: %v", err)
+	}
+	if derived == nil {
+		t.Fatalf("expected class; got: %v", class)
+	}
+	_, found = ctx.GetClass("MyDerivedClass", module)
+	if !found {
+		t.Errorf("expected to find class %q; got: %v", "MyModule::MyDerivedClass", found)
 	}
 }
 

@@ -146,8 +146,30 @@ static inline struct RProc *my_mrb_proc_ptr(mrb_value v) {
 }
 
 static inline mrb_bool my_mrb_const_defined_at(mrb_state *mrb, const char *name) {
-	mrb_sym sym = mrb_intern_cstr(mrb, name);
-	return mrb_const_defined_at(mrb, mrb_obj_value(mrb->object_class), sym);
+	mrb_sym id = mrb_intern_cstr(mrb, name);
+	return mrb_const_defined_at(mrb, mrb_obj_value(mrb->object_class), id);
+}
+
+static inline mrb_bool my_mrb_has_class(mrb_state *mrb, struct RClass *klass, const char *name) {
+  mrb_value sym = mrb_check_intern_cstr(mrb, name);
+  if (mrb_nil_p(sym)) {
+    return FALSE;
+  }
+  if (klass) {
+		return mrb_const_defined_at(mrb, mrb_obj_value(klass), mrb_symbol(sym));
+	}
+	return mrb_const_defined_at(mrb, mrb_obj_value(mrb->object_class), mrb_symbol(sym));
+}
+
+static inline mrb_bool my_mrb_has_module(mrb_state *mrb, struct RClass *klass, const char *name) {
+  mrb_value sym = mrb_check_intern_cstr(mrb, name);
+  if (mrb_nil_p(sym)) {
+    return FALSE;
+  }
+  if (klass) {
+		return mrb_const_defined_at(mrb, mrb_obj_value(klass), mrb_symbol(sym));
+	}
+	return mrb_const_defined_at(mrb, mrb_obj_value(mrb->object_class), mrb_symbol(sym));
 }
 
 // Ruby -> Go

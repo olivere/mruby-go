@@ -1,3 +1,6 @@
-# Regexp = PcreRegexp
 s = "oliver eilhard"
-puts /oliv.*/.match s
+if m = /oliv.*/.match(s)
+	puts "Found match: #{m}"
+else
+	puts "No match"
+end

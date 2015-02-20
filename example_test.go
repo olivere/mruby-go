@@ -106,3 +106,50 @@ concat "Hello", "World"
 	fmt.Println(s)
 	// Output: HelloWorld
 }
+
+func ExampleFunction() {
+	// Create a new context, and set some options
+	ctx := mruby.NewContext()
+	if ctx == nil {
+		fmt.Println("Cannot initialize context")
+		return
+	}
+
+	// sayHello is an extension method that can be called from Ruby.
+	sayHello := func(ctx *mruby.Context, self mruby.Value) (output mruby.Value, err error) {
+		// We expect a string here.
+		sarg, err := ctx.GetArgs("o", self)
+		if err != nil {
+			return mruby.NilValue(ctx), err
+		}
+		s, err := sarg.ToString()
+		if err != nil {
+			return mruby.NilValue(ctx), err
+		}
+		s = fmt.Sprintf("Hello %s!", s)
+		return ctx.ToValue(s)
+	}
+
+	// We create a new module called Helpers that will hold our extension method.
+	module, err := ctx.DefineModule("Helpers", nil)
+	if err != nil {
+		fmt.Println("Cannot create module")
+		return
+	}
+	if module == nil {
+		fmt.Println("Method is nil")
+		return
+	}
+
+	// Now we register the extension method. It will be available as
+	// Helper.say_hello from within Ruby and requires 1 argument.
+	module.DefineClassMethod("say_hello", sayHello, mruby.ArgsRequired(1))
+
+	greeting, err := ctx.LoadStringResult("Helpers.say_hello(ARGV[0])", "Matz")
+	if err != nil {
+		fmt.Printf("Cannot execute say_hello method: %v\n", err)
+		return
+	}
+	fmt.Println(greeting)
+	// Output: Hello Matz!
+}
