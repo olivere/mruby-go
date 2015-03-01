@@ -13,7 +13,7 @@ following things in mind before submitting your pull request:
 * Write a test case which confirms your change.
 * Make sure your changes and your tests work with the latest
   version of mruby. At the moment, we're targeting only the current version
-  of mruby, which is 1.1 at the time of writing this.
+  of mruby, which is 1.1.0 at the time of writing this.
 * Test your changes before creating a pull request (`go test ./...`).
 * Don't mix several features or bug fixes in one pull request.
 * Create a meaningful commit message.

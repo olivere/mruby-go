@@ -13,7 +13,13 @@ import "C"
 import (
 	"reflect"
 	"runtime"
+	"sync"
 	"unsafe"
+)
+
+var (
+	contextsFu sync.Mutex                // guards contexts
+	contexts   map[*C.mrb_state]*Context // list of all Contexts
 )
 
 // Context serves as the entry point for all communication with mruby.
@@ -21,9 +27,11 @@ type Context struct {
 	mrb *C.mrb_state
 	ctx *C.mrbc_context
 
-	captureErrors bool   // indicates whether script errors are captured
-	noExec        bool   // automatically "run" the scripts given to the context
-	filename      string // filename used internally
+	methodsMu       sync.Mutex // guards the next variables
+	methodsByRClass map[*C.struct_RClass]methodMap
+
+	noExec   bool   // automatically "run" the scripts given to the context
+	filename string // filename used internally
 }
 
 // NewContext creates a new mruby context. Use the options to handle
@@ -33,10 +41,16 @@ type Context struct {
 //   ctx := mruby.NewContext()
 //   ctx := mruby.NewContext(mruby.SetNoExec(true), mruby.SetFilename("simple.rb"))
 func NewContext(options ...func(*Context)) *Context {
+	contextsFu.Lock()
+	defer contextsFu.Unlock()
+
+	if contexts == nil {
+		contexts = make(map[*C.mrb_state]*Context)
+	}
+
 	ctx := &Context{
-		captureErrors: true,
-		noExec:        false,
-		filename:      "(mruby-go)",
+		noExec:   false,
+		filename: "(mruby-go)",
 	}
 
 	// Run configuration handlers
@@ -48,10 +62,8 @@ func NewContext(options ...func(*Context)) *Context {
 	cfilename := C.CString(ctx.filename)
 	defer C.free(unsafe.Pointer(cfilename))
 
-	captureErrors := C.mrb_bool(0)
-	if ctx.captureErrors {
-		captureErrors = C.mrb_bool(1)
-	}
+	captureErrors := C.mrb_bool(1)
+
 	noExec := C.mrb_bool(0)
 	if ctx.noExec {
 		noExec = C.mrb_bool(1)
@@ -61,21 +73,18 @@ func NewContext(options ...func(*Context)) *Context {
 	ctx.ctx = C.my_context_new(ctx.mrb, cfilename, captureErrors, noExec)
 
 	runtime.SetFinalizer(ctx, func(x *Context) {
+		contextsFu.Lock()
+		delete(contexts, x.mrb)
 		C.mrbc_context_free(x.mrb, x.ctx)
 		C.mrb_close(x.mrb)
 		x.mrb = nil
 		x.ctx = nil
+		contextsFu.Unlock()
 	})
 
-	return ctx
-}
+	contexts[ctx.mrb] = ctx
 
-// SetCaptureErrors indicates whether script errors are captured (default: true).
-// It is used for configuring a Context (see NewContext for details).
-func SetCaptureErrors(captureErrors bool) func(*Context) {
-	return func(ctx *Context) {
-		ctx.captureErrors = captureErrors
-	}
+	return ctx
 }
 
 // SetNoExec indicates whether scripts given to this context, e.g. via
@@ -105,6 +114,21 @@ func (ctx *Context) IncrementalGC() {
 	C.mrb_incremental_gc(ctx.mrb)
 }
 
+// ObjectClass runs the class for Object class.
+func (ctx *Context) ObjectClass() *Class {
+	return &Class{ctx: ctx, class: ctx.mrb.object_class}
+}
+
+// ObjectModule is the same as ObjectClass, however it returns a Module.
+func (ctx *Context) ObjectModule() *Module {
+	return &Module{ctx: ctx, module: ctx.mrb.object_class}
+}
+
+// KernelModule runs the class for the Kernel module.
+func (ctx *Context) KernelModule() *Module {
+	return &Module{ctx: ctx, module: ctx.mrb.kernel_module}
+}
+
 // LoadString loads a snippet of Ruby code and returns its output.
 // An error is returned if the interpreter failes or the Ruby code
 // raises an exception of type RunError.
@@ -129,12 +153,9 @@ func (ctx *Context) LoadString(code string, args ...interface{}) (Value, error) 
 	C.mrb_define_global_const(ctx.mrb, argv, argvAry)
 
 	result := C.mrb_load_string_cxt(ctx.mrb, ccode, ctx.ctx)
-
 	if C.has_exception(ctx.mrb) != 0 {
 		return NilValue(ctx), newRunError(ctx, true)
 	}
-
-	//log.Printf("mruby result type: %s\n", rubyTypeOf(ctx, result))
 
 	return Value{ctx: ctx, v: result}, nil
 }
@@ -206,4 +227,12 @@ func (ctx *Context) ToValue(value interface{}) (Value, error) {
 		}
 	}
 	return NilValue(ctx), nil
+}
+
+// GetArgs extracts the arguments from args.
+func (ctx *Context) GetArgs(format string, args Value) (Value, error) {
+	cformat := C.CString(format)
+	defer C.free(unsafe.Pointer(cformat))
+	v := C.my_get_args(ctx.mrb, args.v, cformat)
+	return Value{ctx: ctx, v: v}, nil
 }

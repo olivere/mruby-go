@@ -1,24 +1,35 @@
-# MRuby for Google Go
+# MRuby for Go
 
 The [mruby-go](https://github.com/olivere/mruby-go) package enables you
 to use the embedded Ruby interpreter [mruby](https://github.com/mruby/mruby)
-inside Google Go projects.
+inside Go projects.
 
 [![Godoc](http://img.shields.io/badge/godoc-reference-blue.svg?style=flat)](https://godoc.org/github.com/olivere/mruby-go)
 [![license](http://img.shields.io/badge/license-MIT-red.svg?style=flat)](https://raw.githubusercontent.com/olivere/mruby-go/master/MIT-LICENSE)
 
+
+## Status
+
+The API is not stable. We consider this early alpha.
+
+We're using mruby-go in pre-production systems and are pretty confident
+that it behaves as a good citizen. But we don't give any guarantees.
+
+Read the tests to get a feel of what works and what doesn't.
+
+
 ## Prerequisites
 
 We're using mruby-go with Google Go 1.4, but it should work with 1.1+ and
-tip as well. The mruby interpreter went
-[1.0.0](http://www.mruby.org/releases/2014/02/09/mruby-1.0.0-released.html)
+tip as well.
+
+The mruby interpreter went [1.0.0](http://www.mruby.org/releases/2014/02/09/mruby-1.0.0-released.html)
 on 9th Feb 2014, and we have tested it with that version successfully.
-You can find a tarball of the latest version of mruby [here](https://github.com/mruby/mruby/releases).
+We currently use mruby [1.1.0](http://www.mruby.org/releases/2014/11/19/mruby-1.1.0-released.html),
+which has a lot of bug fixes.
 
-We're using mruby-go in production and are pretty confident that it behaves
-as a good citizen. But we don't give any guarantees.
+You can find a tarball of all mruby releases [here](https://github.com/mruby/mruby/releases).
 
-Read the tests to get a feel of what works and what doesn't.
 
 ## Installation
 
@@ -40,9 +51,9 @@ Make sure to have a valid pkg-config file for mruby in your
 
 Make sure that `pkg-config --list-all` includes `mruby`.
 
-Notice that you configuration of mruby is quite simple, you can (and
+Notice that the configuration of mruby is quite simple, you can (and
 probably should) review all settings with regard to your environment.
-There's a [whole section on configuring mruby](#mruby-config).
+There's a [section on configuring mruby](#mruby-config) below.
 
 Next, build mruby-go:
 
@@ -54,11 +65,20 @@ Then run tests with:
 
 and benchmarks with:
 
-    go test -test.bench .
+    go test -bench .
+
 
 ## Getting started
 
-See the examples directory or the tests for example usage.
+See the examples directory or the tests for example usage. You can run the
+examples after successfully building mruby and mruby-go.
+
+Example:
+
+```go
+go run examples/run.go examples/hello_world.rb
+```
+
 
 # <a name="mruby-config">Configuring mruby</a>
 
@@ -78,19 +98,19 @@ If you want to add some (mruby-specific) gems to your mruby installation,
 edit the `./build_config.rb` and add a line to it, e.g.
 `conf.gem :git => 'git@github.com:iij/mruby-io.git', :branch => master`.
 Then compile again via `ruby ./minirake`. We're using e.g.
-[mattn/mruby-json](https://github.com/mattn/mruby-json) and
-[mattn/mruby-sandbox](https://github.com/mattn/mruby-sandbox).
+[mattn/mruby-json](https://github.com/mattn/mruby-json).
 The Internet Initiative Japan Inc. has
-[quite a lot of mruby gems](https://github.com/iij) on GitHub. Pick what
-you need.
+[quite a lot of mruby gems](https://github.com/iij) on GitHub.
+Pick what you need.
 
-For configuring details, we used to edit `./include/mrbconf.h`. We're not
-sure if this is the correct (or right) way of doing things, but it works.
+For configuring details we edit `./include/mrbconf.h`.
+We're not sure if this is the correct way of doing things, but it works fine.
 
 
 # Support
 
 Feel free to send pull requests.
+
 
 # License
 

@@ -10,12 +10,14 @@
 
 #include <mruby.h>
 #include <mruby/array.h>
+#include <mruby/class.h>
 #include <mruby/hash.h>
 #include <mruby/proc.h>
 #include <mruby/data.h>
 #include <mruby/compile.h>
 #include <mruby/string.h>
 #include <mruby/value.h>
+#include <mruby/variable.h>
 
 static inline struct mrbc_context *my_context_new(mrb_state *mrb, const char *filename, mrb_bool capture_errors, mrb_bool no_exec) {
 	mrbc_context *ctx;
@@ -141,6 +143,82 @@ static inline mrb_value get_ary_entry(mrb_value ary, int index) {
 
 static inline struct RProc *my_mrb_proc_ptr(mrb_value v) {
 	return mrb_proc_ptr(v);
+}
+
+static inline mrb_bool my_mrb_const_defined_at(mrb_state *mrb, const char *name) {
+	mrb_sym id = mrb_intern_cstr(mrb, name);
+	return mrb_const_defined_at(mrb, mrb_obj_value(mrb->object_class), id);
+}
+
+static inline mrb_bool my_mrb_has_class(mrb_state *mrb, struct RClass *klass, const char *name) {
+  mrb_value sym = mrb_check_intern_cstr(mrb, name);
+  if (mrb_nil_p(sym)) {
+    return FALSE;
+  }
+  if (klass) {
+		return mrb_const_defined_at(mrb, mrb_obj_value(klass), mrb_symbol(sym));
+	}
+	return mrb_const_defined_at(mrb, mrb_obj_value(mrb->object_class), mrb_symbol(sym));
+}
+
+static inline mrb_bool my_mrb_has_module(mrb_state *mrb, struct RClass *klass, const char *name) {
+  mrb_value sym = mrb_check_intern_cstr(mrb, name);
+  if (mrb_nil_p(sym)) {
+    return FALSE;
+  }
+  if (klass) {
+		return mrb_const_defined_at(mrb, mrb_obj_value(klass), mrb_symbol(sym));
+	}
+	return mrb_const_defined_at(mrb, mrb_obj_value(mrb->object_class), mrb_symbol(sym));
+}
+
+// Ruby -> Go
+
+extern mrb_value my_mrb_func_call(mrb_state *, mrb_value);
+
+static inline mrb_func_t my_mrb_func_call_t() {
+	return &my_mrb_func_call;
+}
+
+/*
+extern mrb_value my_mrb_class_func_call(mrb_state *, mrb_value);
+
+static inline mrb_func_t my_mrb_class_func_call_t() {
+	return &my_mrb_class_func_call;
+}
+*/
+
+// Args
+
+// required arguments
+static inline mrb_aspec args_any() {
+	return MRB_ARGS_ANY();
+}
+
+// required arguments
+static inline mrb_aspec args_none() {
+	return MRB_ARGS_NONE();
+}
+
+// required arguments
+static inline mrb_aspec args_req(int n) {
+	return MRB_ARGS_REQ(n);
+}
+
+// optional arguments
+static inline mrb_aspec args_opt(int n) {
+	return MRB_ARGS_OPT(n);
+}
+
+// required arguments
+static inline mrb_aspec args_arg(int req, int opt) {
+	return MRB_ARGS_ARG(req, opt);
+}
+
+static inline mrb_value my_get_args(mrb_state *mrb, mrb_value self, const char *format) {
+	mrb_value arg;
+	mrb_get_args(mrb, format, &arg);
+	return arg;
 }
 
 #endif

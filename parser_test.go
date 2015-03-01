@@ -104,7 +104,7 @@ concat "Hello", "World"
 		}
 		s, ok := res.(string)
 		if !ok {
-			b.Errorf("run %d: expected string, got: %v", val)
+			b.Errorf("run %d: expected string, got: %v", i, val)
 		}
 		if s != "HelloWorld" {
 			b.Errorf("run %d: expected %q; got: %q", i, "HelloWorld", s)
