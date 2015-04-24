@@ -215,10 +215,32 @@ static inline mrb_aspec args_arg(int req, int opt) {
 	return MRB_ARGS_ARG(req, opt);
 }
 
+/*
 static inline mrb_value my_get_args(mrb_state *mrb, mrb_value self, const char *format) {
 	mrb_value arg;
 	mrb_get_args(mrb, format, &arg);
 	return arg;
+}
+*/
+
+// Declared in args.go
+extern void go_get_arg_append(mrb_value*);
+
+static inline int my_get_args_all(mrb_state *mrb) {
+	mrb_value *argv;
+	mrb_value block;
+	int argc, i, count;
+
+	count = mrb_get_args(mrb, "*&", &argv, &argc, &block);
+	for (i = 0; i < argc; i++) {
+		go_get_arg_append(&argv[i]);
+	}
+
+	if (!mrb_nil_p(block)) {
+		go_get_arg_append(&argv[i]);
+	}
+
+	return count;
 }
 
 #endif

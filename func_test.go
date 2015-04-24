@@ -19,18 +19,21 @@ func BenchmarkFunctionCalls(b *testing.B) {
 	}
 
 	// EscapeHtml as a non-trivial helper method.
-	escapeHtml := func(ctx *mruby.Context, self mruby.Value) (output mruby.Value, err error) {
+	escapeHtml := func(ctx *mruby.Context) (output mruby.Value, err error) {
 		// We expect a string here.
-		sarg, err := ctx.GetArgs("o", self)
+		args, err := ctx.GetArgs()
 		if err != nil {
 			return mruby.NilValue(ctx), err
 		}
-		s, err := sarg.ToString()
-		if err != nil {
-			return mruby.NilValue(ctx), err
+		if len(args) == 1 {
+			s, err := args[0].ToString()
+			if err != nil {
+				return mruby.NilValue(ctx), err
+			}
+			s = html.EscapeString(s)
+			return ctx.ToValue(s)
 		}
-		s = html.EscapeString(s)
-		return ctx.ToValue(s)
+		return mruby.NilValue(ctx), nil
 	}
 
 	// We create a new module called Helpers that will hold our extension method.
@@ -42,7 +45,7 @@ func BenchmarkFunctionCalls(b *testing.B) {
 		b.Fatal(err)
 	}
 
-	module.DefineClassMethod("escape_html", escapeHtml, mruby.ArgsRequired(1))
+	module.DefineClassMethod("escape_html", escapeHtml)
 
 	input := "<test&go>"
 	expected := html.EscapeString(input)
@@ -60,18 +63,21 @@ func BenchmarkFunctionCalls(b *testing.B) {
 
 func BenchmarkFunctionCallsInParallel(b *testing.B) {
 	// EscapeHtml as a non-trivial helper method.
-	escapeHtml := func(ctx *mruby.Context, self mruby.Value) (output mruby.Value, err error) {
+	escapeHtml := func(ctx *mruby.Context) (output mruby.Value, err error) {
 		// We expect a string here.
-		sarg, err := ctx.GetArgs("o", self)
+		args, err := ctx.GetArgs()
 		if err != nil {
 			return mruby.NilValue(ctx), err
 		}
-		s, err := sarg.ToString()
-		if err != nil {
-			return mruby.NilValue(ctx), err
+		if len(args) == 1 {
+			s, err := args[0].ToString()
+			if err != nil {
+				return mruby.NilValue(ctx), err
+			}
+			s = html.EscapeString(s)
+			return ctx.ToValue(s)
 		}
-		s = html.EscapeString(s)
-		return ctx.ToValue(s)
+		return mruby.NilValue(ctx), nil
 	}
 
 	input := "<test&go>"
@@ -94,7 +100,7 @@ func BenchmarkFunctionCallsInParallel(b *testing.B) {
 				b.Fatal(err)
 			}
 
-			module.DefineClassMethod("escape_html", escapeHtml, mruby.ArgsRequired(1))
+			module.DefineClassMethod("escape_html", escapeHtml)
 
 			got, err := ctx.LoadStringResult("Helpers.escape_html(ARGV[0])", input)
 			if err != nil {

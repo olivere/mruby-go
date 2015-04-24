@@ -76,13 +76,14 @@ func (ctx *Context) GetModule(name string, outer RClass) (*Module, bool) {
 }
 
 // DefineMethod registers a method with the name in the module.
-// The function is called when executed in Ruby. The args value specifies
-// the number of required and optional arguments (if any) of f.
-func (m *Module) DefineMethod(name string, f Function, args Args) {
+// The function is called when executed in Ruby.
+func (m *Module) DefineMethod(name string, f Function) {
 	m.ctx.addMethod(m.module, name, f)
 
 	cname := C.CString(name)
 	defer C.free(unsafe.Pointer(cname))
+
+	args := ArgsAny()
 
 	C.mrb_define_method(
 		m.ctx.mrb,
@@ -93,13 +94,14 @@ func (m *Module) DefineMethod(name string, f Function, args Args) {
 }
 
 // DefineClassMethod registers a class method with the name in the module.
-// The function is called when executed in Ruby. The args value specifies
-// the number of required and optional arguments (if any) of f.
-func (m *Module) DefineClassMethod(name string, f Function, args Args) {
+// The function is called when executed in Ruby.
+func (m *Module) DefineClassMethod(name string, f Function) {
 	m.ctx.addMethod(m.module.c, name, f)
 
 	cname := C.CString(name)
 	defer C.free(unsafe.Pointer(cname))
+
+	args := ArgsAny()
 
 	// Note: Use mrb_define_method instead of mrb_define_class_method here.
 	C.mrb_define_method(

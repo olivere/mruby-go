@@ -229,10 +229,31 @@ func (ctx *Context) ToValue(value interface{}) (Value, error) {
 	return NilValue(ctx), nil
 }
 
+/*
 // GetArgs extracts the arguments from args.
 func (ctx *Context) GetArgs(format string, args Value) (Value, error) {
 	cformat := C.CString(format)
 	defer C.free(unsafe.Pointer(cformat))
 	v := C.my_get_args(ctx.mrb, args.v, cformat)
 	return Value{ctx: ctx, v: v}, nil
+}
+*/
+
+// GetArgs extracts the arguments from args.
+func (ctx *Context) GetArgs() ([]Value, error) {
+	getArgLock.Lock()
+	defer getArgLock.Unlock()
+
+	getArgAccumulator = make([]*C.mrb_value, 0)
+
+	C.my_get_args_all(ctx.mrb)
+
+	values := make([]Value, 0)
+	for _, v := range getArgAccumulator {
+		values = append(values, Value{ctx: ctx, v: *v})
+	}
+
+	getArgAccumulator = nil
+
+	return values, nil
 }

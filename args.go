@@ -4,6 +4,10 @@
 
 package mruby
 
+import (
+	"sync"
+)
+
 /*
 #cgo pkg-config: mruby
 #include "mruby_go.h"
@@ -38,4 +42,12 @@ func ArgsOptional(optional int) Args {
 // ArgsArg specifies a function that a number of required and optional arguments.
 func ArgsArg(required, optional int) Args {
 	return Args(C.args_arg(C.int(required), C.int(optional)))
+}
+
+var getArgAccumulator []*C.mrb_value
+var getArgLock sync.Mutex
+
+//export go_get_arg_append
+func go_get_arg_append(v *C.mrb_value) {
+	getArgAccumulator = append(getArgAccumulator, v)
 }

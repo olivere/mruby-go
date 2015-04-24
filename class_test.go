@@ -149,11 +149,11 @@ func TestClassMethodWithNoArgs(t *testing.T) {
 		t.Errorf("expected classule; got: %v", class)
 	}
 
-	helloWorld := func(ctx *Context, self Value) (Value, error) {
+	helloWorld := func(ctx *Context) (Value, error) {
 		return ctx.ToValue("Hello world")
 	}
 
-	class.DefineClassMethod("hello", helloWorld, ArgsNone())
+	class.DefineClassMethod("hello", helloWorld)
 
 	s, err := ctx.LoadStringResult("MyClass.hello()")
 	if err != nil {
@@ -178,20 +178,23 @@ func TestClassMethodWithRequiredArg(t *testing.T) {
 		t.Errorf("expected class; got: %v", class)
 	}
 
-	escapeHtml := func(ctx *Context, self Value) (output Value, err error) {
+	escapeHtml := func(ctx *Context) (output Value, err error) {
 		// We expect a string here.
-		sv, err := ctx.GetArgs("o", self)
+		args, err := ctx.GetArgs()
 		if err != nil {
 			return NilValue(ctx), err
 		}
-		s, err := sv.ToString()
-		if err == nil {
-			s = html.EscapeString(s)
+		if len(args) == 1 {
+			s, err := args[0].ToString()
+			if err == nil {
+				s = html.EscapeString(s)
+			}
+			return ctx.ToValue(s)
 		}
-		return ctx.ToValue(s)
+		return NilValue(ctx), nil
 	}
 
-	class.DefineClassMethod("escape_html", escapeHtml, ArgsRequired(1))
+	class.DefineClassMethod("escape_html", escapeHtml)
 
 	input := "<esc&ped>"
 	expected := html.EscapeString(input)

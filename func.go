@@ -21,9 +21,8 @@ var _ = log.Print
 type methodMap map[C.mrb_sym]Function
 
 // Function defines the signature of a Go function that can be called
-// from within a MRuby script. The self parameter can be used to extract
-// the arguments passed to the extension method.
-type Function func(ctx *Context, self Value) (Value, error)
+// from within a MRuby script.
+type Function func(ctx *Context) (Value, error)
 
 //export my_mrb_func_call
 func my_mrb_func_call(mrb *C.mrb_state, v C.mrb_value) C.mrb_value {
@@ -44,7 +43,7 @@ func my_mrb_func_call(mrb *C.mrb_state, v C.mrb_value) C.mrb_value {
 		return C.mrb_nil_value()
 	}
 
-	input := Value{ctx: ctx, v: v}
+	//input := Value{ctx: ctx, v: v}
 
 	callinfo := mrb.c.ci
 
@@ -58,7 +57,7 @@ func my_mrb_func_call(mrb *C.mrb_state, v C.mrb_value) C.mrb_value {
 		return C.mrb_nil_value()
 	}
 
-	output, err := method(ctx, input)
+	output, err := method(ctx)
 	if err != nil {
 		return C.mrb_nil_value()
 	}

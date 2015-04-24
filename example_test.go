@@ -116,18 +116,21 @@ func ExampleFunction() {
 	}
 
 	// sayHello is an extension method that can be called from Ruby.
-	sayHello := func(ctx *mruby.Context, self mruby.Value) (output mruby.Value, err error) {
+	sayHello := func(ctx *mruby.Context) (output mruby.Value, err error) {
 		// We expect a string here.
-		sarg, err := ctx.GetArgs("o", self)
+		args, err := ctx.GetArgs()
 		if err != nil {
 			return mruby.NilValue(ctx), err
 		}
-		s, err := sarg.ToString()
-		if err != nil {
-			return mruby.NilValue(ctx), err
+		if len(args) == 1 {
+			s, err := args[0].ToString()
+			if err != nil {
+				return mruby.NilValue(ctx), err
+			}
+			s = fmt.Sprintf("Hello %s!", s)
+			return ctx.ToValue(s)
 		}
-		s = fmt.Sprintf("Hello %s!", s)
-		return ctx.ToValue(s)
+		return mruby.NilValue(ctx), nil
 	}
 
 	// We create a new module called Helpers that will hold our extension method.
@@ -143,7 +146,7 @@ func ExampleFunction() {
 
 	// Now we register the extension method. It will be available as
 	// Helper.say_hello from within Ruby and requires 1 argument.
-	module.DefineClassMethod("say_hello", sayHello, mruby.ArgsRequired(1))
+	module.DefineClassMethod("say_hello", sayHello)
 
 	greeting, err := ctx.LoadStringResult("Helpers.say_hello(ARGV[0])", "Matz")
 	if err != nil {

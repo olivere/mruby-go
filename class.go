@@ -105,13 +105,14 @@ func (ctx *Context) GetClass(name string, outer RClass) (*Class, bool) {
 }
 
 // DefineMethod registers an instance method with the name in the class.
-// The function is called when executed in Ruby. The args value specifies
-// the number of required and optional arguments (if any) of f.
-func (c *Class) DefineMethod(name string, f Function, args Args) {
+// The function is called when executed in Ruby.
+func (c *Class) DefineMethod(name string, f Function) {
 	c.ctx.addMethod(c.class, name, f)
 
 	cname := C.CString(name)
 	defer C.free(unsafe.Pointer(cname))
+
+	args := ArgsAny()
 
 	C.mrb_define_method(
 		c.ctx.mrb,
@@ -122,13 +123,14 @@ func (c *Class) DefineMethod(name string, f Function, args Args) {
 }
 
 // DefineMethod registers a class method with the name in the class.
-// The function is called when executed in Ruby. The args value specifies
-// the number of required and optional arguments (if any) of f.
-func (c *Class) DefineClassMethod(name string, f Function, args Args) {
+// The function is called when executed in Ruby.
+func (c *Class) DefineClassMethod(name string, f Function) {
 	c.ctx.addMethod(c.class.c, name, f)
 
 	cname := C.CString(name)
 	defer C.free(unsafe.Pointer(cname))
+
+	args := ArgsAny()
 
 	C.mrb_define_class_method(
 		c.ctx.mrb,

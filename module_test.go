@@ -107,11 +107,11 @@ func TestModuleDefineMethodWithNoArgs(t *testing.T) {
 		t.Errorf("expected module; got: %v", mod)
 	}
 
-	helloWorld := func(ctx *Context, self Value) (Value, error) {
+	helloWorld := func(ctx *Context) (Value, error) {
 		return ctx.ToValue("Hello world")
 	}
 
-	mod.DefineClassMethod("hello", helloWorld, ArgsNone())
+	mod.DefineClassMethod("hello", helloWorld)
 
 	s, err := ctx.LoadStringResult("Helpers.hello()")
 	if err != nil {
@@ -136,20 +136,23 @@ func TestModuleDefineMethodWithRequiredArg(t *testing.T) {
 		t.Errorf("expected module; got: %v", mod)
 	}
 
-	escapeHtml := func(ctx *Context, self Value) (output Value, err error) {
+	escapeHtml := func(ctx *Context) (output Value, err error) {
 		// We expect a string here.
-		sv, err := ctx.GetArgs("o", self)
+		args, err := ctx.GetArgs()
 		if err != nil {
 			return NilValue(ctx), err
 		}
-		s, err := sv.ToString()
-		if err == nil {
-			s = html.EscapeString(s)
+		if len(args) == 1 {
+			s, err := args[0].ToString()
+			if err == nil {
+				s = html.EscapeString(s)
+			}
+			return ctx.ToValue(s)
 		}
-		return ctx.ToValue(s)
+		return NilValue(ctx), nil
 	}
 
-	mod.DefineClassMethod("escape_html", escapeHtml, ArgsRequired(1))
+	mod.DefineClassMethod("escape_html", escapeHtml)
 
 	input := "<esc&ped>"
 	expected := html.EscapeString(input)
